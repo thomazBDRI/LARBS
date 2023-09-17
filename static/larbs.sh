@@ -6,8 +6,8 @@
 
 ### OPTIONS AND VARIABLES ###
 
-dotfilesrepo="https://github.com/lukesmithxyz/voidrice.git"
-progsfile="https://raw.githubusercontent.com/LukeSmithxyz/LARBS/master/static/progs.csv"
+dotfilesrepo="https://github.com/thomazBDRI/voidrice.git"
+progsfile="https://raw.githubusercontent.com/thomazBDRI/LARBS/master/static/progs.csv"
 aurhelper="yay"
 repobranch="master"
 export TERM=ansi
@@ -184,10 +184,8 @@ putgitrepo() {
 vimplugininstall() {
 	# Installs vim plugins.
 	whiptail --infobox "Installing neovim plugins..." 7 60
-	mkdir -p "/home/$name/.config/nvim/autoload"
-	curl -Ls "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim" >  "/home/$name/.config/nvim/autoload/plug.vim"
 	chown -R "$name:wheel" "/home/$name/.config/nvim"
-	sudo -u "$name" nvim -c "PlugInstall|q|q"
+	sudo -u "$name" nvim --headless +PackerSync +q
 }
 
 makeuserjs(){
@@ -219,7 +217,7 @@ Exec=/usr/local/lib/arkenfox-auto-update" > /etc/pacman.d/hooks/arkenfox.hook
 }
 
 installffaddons(){
-	addonlist="ublock-origin decentraleyes istilldontcareaboutcookies vim-vixen"
+	addonlist="ublock-origin decentraleyes istilldontcareaboutcookies vim-vixen proton-pass simplelogin"
 	addontmp="$(mktemp -d)"
 	trap "rm -fr $addontmp" HUP INT QUIT TERM PWR EXIT
 	IFS=' '
@@ -307,13 +305,20 @@ $aurhelper -Y --save --devel
 # and all build dependencies are installed.
 installationloop
 
-# Install the dotfiles in the user's home directory, but remove .git dir and
-# other unnecessary files.
-putgitrepo "$dotfilesrepo" "/home/$name" "$repobranch"
-rm -rf "/home/$name/.git/" "/home/$name/README.md" "/home/$name/LICENSE" "/home/$name/FUNDING.yml"
+# Tnex modifications here
+  # Install the dotfiles in the user's home directory and add home links
+putgitrepo "$dotfilesrepo" "$repodir" "$repobranch"
+sudo -u "$name" mkdir "/home/$name/.config"
+sudo -u "$name" ln -sf "$repodir/voidrice/.config/*" "/home/$name/.config/"
+sudo -u "$name" ln -sf "$repodir/voidrice/.local/bin" "/home/$name/.local/bin"
+sudo -u "$name" ln -sf "$repodir/voidrice/.local/share/*" "/home/$name/.local/share/"
+sudo -u "$name" ln -sf "$repodir/voidrice/.config/shell/profile" "/home/$name/.zprofile"
+sudo -u "$name" ln -sf "$repodir/voidrice/.config/shell/profile" "/home/$name/.profile"
+sudo -u "$name" ln -sf "$repodir/voidrice/.config/x11/xprofile" "/home/$name/.xprofile"
+sudo -u "$name" ln -sf "$repodir/voidrice/.config/x11/xinitrc" "/home/$name/.xinitrc"
 
 # Install vim plugins if not alread present.
-[ ! -f "/home/$name/.config/nvim/autoload/plug.vim" ] && vimplugininstall
+[ ! -f "/home/$name/.config/nvim/plugin/packer_compiled.lua" ] && vimplugininstall
 
 # Most important command! Get rid of the beep!
 rmmod pcspkr
