@@ -359,7 +359,8 @@ sleep 1
 profile="$(sed -n "/Default=.*.default-release/ s/.*=//p" "$profilesini")"
 pdir="$browserdir/$profile"
 
-[ -d "$pdir" ] && makeuserjs
+# Tnex: Removed arkenjs as librewolf is already enough
+# [ -d "$pdir" ] && makeuserjs
 
 [ -d "$pdir" ] && installffaddons
 
