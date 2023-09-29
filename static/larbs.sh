@@ -178,7 +178,7 @@ putgitrepo() {
 	sudo -u "$name" git -C "$repodir" clone --depth 1 \
 		--single-branch --no-tags -q --recursive -b "$branch" \
 		--recurse-submodules "$1" "$dir"
-	sudo -u "$name" cp -rfT "$dir" "$2"
+	sudo -u "$name" cp -rfT "$dir" "$2/voidrice"
 }
 
 vimplugininstall() {
@@ -316,6 +316,7 @@ sudo -u "$name" ln -sf "$repodir/voidrice/.config/shell/profile" "/home/$name/.z
 sudo -u "$name" ln -sf "$repodir/voidrice/.config/shell/profile" "/home/$name/.profile"
 sudo -u "$name" ln -sf "$repodir/voidrice/.config/x11/xprofile" "/home/$name/.xprofile"
 sudo -u "$name" ln -sf "$repodir/voidrice/.config/x11/xinitrc" "/home/$name/.xinitrc"
+sudo -u "$name" ln -sf "$repodir/voidrice/.gitconfig" "/home/$name/.gitconfig"
 
 # Install vim plugins if not alread present.
 [ ! -f "/home/$name/.config/nvim/plugin/packer_compiled.lua" ] && vimplugininstall
@@ -345,6 +346,15 @@ echo "export \$(dbus-launch)" >/etc/profile.d/dbus.sh
 	# Enable left mouse button by tapping
 	Option "Tapping" "on"
 EndSection' >/etc/X11/xorg.conf.d/40-libinput.conf
+
+# Change X keyboard to abnt
+[ ! -f /etc/X11/xorg.conf.d/00-keyboard.conf ] && printf 'Section "InputClass"
+        Identifier "system-keyboard"
+        MatchIsKeyboard "on"
+        Option "XkbLayout" "br"
+        Option "XkbModel" "pc105"
+        Option "XkbOptions" "grp:alt_shift_toggle"
+EndSection' >/etc/X11/xorg.conf.d/00-keyboard.conf
 
 # All this below to get Librewolf installed with add-ons and non-bad settings.
 
