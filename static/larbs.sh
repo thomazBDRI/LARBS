@@ -309,7 +309,7 @@ installationloop
   # Install the dotfiles in the user's home directory and add home links
 putgitrepo "$dotfilesrepo" "$repodir" "$repobranch"
 sudo -u "$name" mkdir "/home/$name/.config"
-sudo -u "$name" ln -sf "$repodir/voidrice/.config/*" "/home/$name/.config/"
+sudo -u "$name" ln -sf $repodir/voidrice/.config/* "/home/$name/.config/"
 sudo -u "$name" ln -sf "$repodir/voidrice/.local/bin" "/home/$name/.local/bin"
 sudo -u "$name" ln -sf "$repodir/voidrice/.local/share/*" "/home/$name/.local/share/"
 sudo -u "$name" ln -sf "$repodir/voidrice/.config/shell/profile" "/home/$name/.zprofile"
@@ -353,7 +353,6 @@ EndSection' >/etc/X11/xorg.conf.d/40-libinput.conf
         MatchIsKeyboard "on"
         Option "XkbLayout" "br"
         Option "XkbModel" "pc105"
-        Option "XkbOptions" "grp:alt_shift_toggle"
 EndSection' >/etc/X11/xorg.conf.d/00-keyboard.conf
 
 # All this below to get Librewolf installed with add-ons and non-bad settings.
