@@ -326,6 +326,7 @@ installationloop
  # Install the dotfiles in the user's home directory and add home links
 putgitrepo "$dotfilesrepo" "$repodir" "$repobranch"
 sudo -u "$name" mkdir "/home/$name/.config"
+sudo -u "$name" mkdir "/home/$name/.ssh"
 sudo -u "$name" ln -sf $repodir/voidrice/.config/* "/home/$name/.config/"
 sudo -u "$name" ln -sf "$repodir/voidrice/.local/bin" "/home/$name/.local/bin"
 sudo -u "$name" ln -sf "$repodir/voidrice/.local/share/*" "/home/$name/.local/share/"
@@ -345,8 +346,6 @@ echo "blacklist pcspkr" >/etc/modprobe.d/nobeep.conf
 # Make zsh the default shell for the user.
 chsh -s /bin/zsh "$name" >/dev/null 2>&1
 sudo -u "$name" mkdir -p "/home/$name/.cache/zsh/"
-sudo -u "$name" mkdir -p "/home/$name/.config/abook/"
-sudo -u "$name" mkdir -p "/home/$name/.config/mpd/playlists/"
 
 # dbus UUID must be generated for Artix runit.
 dbus-uuidgen >/var/lib/dbus/machine-id
@@ -396,7 +395,7 @@ pkill -u "$name" librewolf
 # Allow wheel users to sudo with password and allow several system commands
 # (like `shutdown` to run without password).
 echo "%wheel ALL=(ALL:ALL) ALL" >/etc/sudoers.d/00-larbs-wheel-can-sudo
-echo "%wheel ALL=(ALL:ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend,/usr/bin/wifi-menu,/usr/bin/mount,/usr/bin/umount,/usr/bin/pacman -Syu,/usr/bin/pacman -Syyu,/usr/bin/pacman -Syyu --noconfirm,/usr/bin/loadkeys,/usr/bin/pacman -Syyuw --noconfirm,/usr/bin/pacman -S -y --config /etc/pacman.conf --,/usr/bin/pacman -S -y -u --config /etc/pacman.conf --" >/etc/sudoers.d/01-larbs-cmds-without-password
+echo "%wheel ALL=(ALL:ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend,/usr/bin/wifi-menu,/usr/bin/mount,/usr/bin/umount,/usr/bin/pacman -Syu,/usr/bin/pacman -Syyu,/usr/bin/pacman -Syyu --noconfirm,/usr/bin/loadkeys,/usr/bin/pacman -Syyuw --noconfirm,/usr/bin/pacman -S -y --config /etc/pacman.conf --,/usr/bin/pacman -S -y -u --config /etc/pacman.conf --,/usr/bin/tailscale up,/usr/bin/tailscale down" >/etc/sudoers.d/01-larbs-cmds-without-password
 echo "Defaults editor=/usr/bin/nvim" >/etc/sudoers.d/02-larbs-visudo-editor
 mkdir -p /etc/sysctl.d
 echo "kernel.dmesg_restrict = 0" > /etc/sysctl.d/dmesg.conf
@@ -407,6 +406,29 @@ rm -f /etc/sudoers.d/larbs-temp
 # Add user to service groups
 usermod -a -G docker,libvirt "$name"
 echo "firewall_backend=\"iptables\"" >> /etc/libvirt/network.conf
+
+# ssh setup
+sudo -u "$name" tee "/home/$name/.ssh" > /dev/null <<EOT
+Host *
+	IdentityAgent ~/.1password/agent.sock
+
+Host code-ssh.tnex.xyz
+ProxyCommand /home/thomaz/.asdf/shims/cloudflared access ssh --hostname %h
+
+# Personal GitHub
+Host tnex
+	HostName github.com
+	User git
+	IdentityFile ~/.ssh/tnex.pub
+	IdentitiesOnly yes
+
+# Work GitHub
+Host born
+	HostName github.com
+	User git
+	IdentityFile ~/.ssh/born.pub
+	IdentitiesOnly yes
+EOT
 
 # Systemd-resolved config
 ln -sf ../run/systemd/resolve/stub-resolv.conf /etc/resolv.conf && systemctl restart systemd-resolved
