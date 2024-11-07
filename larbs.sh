@@ -1,13 +1,9 @@
 #!/bin/sh
 
-# Luke's Auto Rice Boostrapping Script (LARBS)
-# by Luke Smith <luke@lukesmith.xyz>
-# License: GNU GPLv3
-
 ### OPTIONS AND VARIABLES ###
 
 dotfilesrepo="https://github.com/thomazBDRI/voidrice.git"
-progsfile="https://raw.githubusercontent.com/thomazBDRI/LARBS/master/static/progs.csv"
+progsfile="https://raw.githubusercontent.com/thomazBDRI/LARBS/master/progs.csv"
 aurhelper="yay"
 repobranch="master"
 export TERM=ansi
@@ -143,6 +139,19 @@ aurinstall() {
 	sudo -u "$name" $aurhelper -S --noconfirm "$1" >/dev/null 2>&1
 }
 
+asdfinstall() {
+  [ -x "$(command -v "asdf")" ] || aurinstall "asdf" "Run environment for programming languages"
+	whiptail --title "LARBS Installation" \
+		--infobox "Installing \`$1\` ($n of $total) from asdf version latest. $1 $2" 9 70
+  asdf plugin add "$1" && asdf install "$1" latest
+}
+
+systemdservice() {
+	whiptail --title "LARBS Installation" \
+		--infobox "Enabling \`$1\` ($n of $total) Systemd Service. $1 $2" 9 70
+  sudo -u "$name" systemctl enable "$1"
+}
+
 pipinstall() {
 	whiptail --title "LARBS Installation" \
 		--infobox "Installing the Python package \`$1\` ($n of $total). $1 $2" 9 70
@@ -163,6 +172,8 @@ installationloop() {
 		"A") aurinstall "$program" "$comment" ;;
 		"G") gitmakeinstall "$program" "$comment" ;;
 		"P") pipinstall "$program" "$comment" ;;
+		"F") asdfinstall "$program" "$comment" ;;
+		"S") systemdservice "$program" "$comment" ;;
 		*) maininstall "$program" "$comment" ;;
 		esac
 	done </tmp/progs.csv
@@ -217,7 +228,7 @@ Exec=/usr/local/lib/arkenfox-auto-update" > /etc/pacman.d/hooks/arkenfox.hook
 }
 
 installffaddons(){
-	addonlist="ublock-origin decentraleyes istilldontcareaboutcookies vim-vixen proton-pass simplelogin"
+	addonlist="ublock-origin decentraleyes istilldontcareaboutcookies vim-vixen simplelogin"
 	addontmp="$(mktemp -d)"
 	trap "rm -fr $addontmp" HUP INT QUIT TERM PWR EXIT
 	IFS=' '
@@ -298,7 +309,7 @@ grep -q "ILoveCandy" /etc/pacman.conf || sed -i "/#VerbosePkgLists/a ILoveCandy"
 sed -Ei "s/^#(ParallelDownloads).*/\1 = 5/;/^#Color$/s/#//" /etc/pacman.conf
 
 # Use all cores for compilation.
-# sed -i "s/-j2/-j$(nproc)/;/^#MAKEFLAGS/s/^#//" /etc/makepkg.conf
+sed -i "s/-j2/-j$(nproc)/;/^#MAKEFLAGS/s/^#//" /etc/makepkg.conf
 
 manualinstall $aurhelper || error "Failed to install AUR helper."
 
@@ -312,7 +323,7 @@ $aurhelper -Y --save --devel
 installationloop
 
 # Tnex modifications here
-  # Install the dotfiles in the user's home directory and add home links
+ # Install the dotfiles in the user's home directory and add home links
 putgitrepo "$dotfilesrepo" "$repodir" "$repobranch"
 sudo -u "$name" mkdir "/home/$name/.config"
 sudo -u "$name" ln -sf $repodir/voidrice/.config/* "/home/$name/.config/"
@@ -375,7 +386,7 @@ profile="$(sed -n "/Default=.*.default-default/ s/.*=//p" "$profilesini")"
 pdir="$browserdir/$profile"
 
 # Tnex: Removed arkenjs as librewolf is already enough
-# [ -d "$pdir" ] && makeuserjs
+[ -d "$pdir" ] && makeuserjs
 
 [ -d "$pdir" ] && installffaddons
 
@@ -392,6 +403,13 @@ echo "kernel.dmesg_restrict = 0" > /etc/sysctl.d/dmesg.conf
 
 # Cleanup
 rm -f /etc/sudoers.d/larbs-temp
+
+# Add user to service groups
+usermod -a -G docker,libvirt "$name"
+echo "firewall_backend=\"iptables\"" >> /etc/libvirt/network.conf
+
+# Systemd-resolved config
+ln -sf ../run/systemd/resolve/stub-resolv.conf /etc/resolv.conf && systemctl restart systemd-resolved
 
 # Last message! Install complete!
 finalize
