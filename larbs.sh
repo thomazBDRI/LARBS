@@ -430,6 +430,25 @@ Host born
 	IdentitiesOnly yes
 EOT
 
+# keymap setup
+tee "/etc/keyd/default.conf" > /dev/null <<EOT
+[ids]
+
+*
+
+[main]
+
+# Maps capslock to escape when pressed and control when held.
+capslock = overload(control, esc)
+
+# Thinkpad question mark not working
+rightcontrol = rightcontrol
+
+# Remaps the escape key to capslock
+# esc = capslock
+EOT
+
+
 # Systemd-resolved config
 ln -sf ../run/systemd/resolve/stub-resolv.conf /etc/resolv.conf && systemctl restart systemd-resolved
 
